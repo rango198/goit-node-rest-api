@@ -1,18 +1,19 @@
 import express from "express";
 import morgan from "morgan";
 import cors from "cors";
-
+import contactsRouter from "./routes/contactsRouter.js";
+import dotenv from "dotenv";
 import mongoose from "mongoose";
 
-const DB_HOST =
-  "mongodb+srv://DataBase:23pm89ecio@cluster0.5efshsq.mongodb.net/db-contacts?retryWrites=true&w=majority&appName=Cluster0";
+dotenv.config();
+const { DB_HOST, PORT = 3000 } = process.env;
 
 mongoose.set("strictQuery", true);
 
 mongoose
   .connect(DB_HOST)
   .then(() => {
-    app.listen(3000, () => {
+    app.listen(PORT, () => {
       console.log("Database connect success");
     });
   })
@@ -20,9 +21,6 @@ mongoose
     console.log(error.message);
     process.exit(1);
   });
-
-import contactsRouter from "./routes/contactsRouter.js";
-import { error } from "console";
 
 const app = express();
 
