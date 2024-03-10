@@ -6,16 +6,18 @@ import validateBody from "../helpers/validateBody.js";
 import {
   createContactSchema,
   updateContactSchema,
-} from "../schemas/contactsSchemas.js";
+  updateFavoriteSchema,
+} from "../modals/contact.js";
 import isCheckBody from "../middleware/isCheckBody.js";
+import isValidId from "../middleware/isValidId.js";
 
 const contactsRouter = express.Router();
 
 contactsRouter.get("/", ctrl.getAllContacts);
 
-contactsRouter.get("/:id", ctrl.getOneContact);
+contactsRouter.get("/:id", isValidId, ctrl.getOneContact);
 
-contactsRouter.delete("/:id", ctrl.deleteContact);
+contactsRouter.delete("/:id", isValidId, ctrl.deleteContact);
 
 contactsRouter.post(
   "/",
@@ -26,9 +28,18 @@ contactsRouter.post(
 
 contactsRouter.put(
   "/:id",
+  isValidId,
   isCheckBody,
   validateBody(updateContactSchema),
   ctrl.updateContact
+);
+
+contactsRouter.patch(
+  "/:id/favorite",
+  isValidId,
+  isCheckBody,
+  validateBody(updateFavoriteSchema),
+  ctrl.updateFavorite
 );
 
 export default contactsRouter;
