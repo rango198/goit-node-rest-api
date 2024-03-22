@@ -1,16 +1,26 @@
 import HttpError from "../helpers/HttpError.js";
 import ctrWrapper from "../helpers/ctrWrapper.js";
-// import * as contactsService from "../services/contactsServices.js";
 import Contact from "../modals/contact.js";
 
-const getAllContacts = async (_, res) => {
-  const result = await Contact.find();
-  res.status(200).json(result);
+const getAllContacts = async (req, res) => {
+  const { _id: owner } = req.user;
+  const { page = 1, limit = 10 } = req.query;
+  const skip = (page - 1) * limit;
+  const filter = { owner, ...filterParams };
+
+  const result = await Contact.find({ owner }, "createdAt -updateAt", {
+    skip,
+    limit,
+  }).populate("owner", "name email");
+  const total = await Contact.countDocuments(filter);
+
+  res.status(200).json(result, total);
 };
 
 const getOneContact = async (req, res) => {
   const { id } = req.params;
-  const result = await Contact.findOne({ _id: id });
+  const { _id: owner } = req.user;
+  const result = await Contact.findOne({ _id: id, owner });
   if (!result) {
     throw HttpError(404, "Contact not found");
   }
@@ -19,21 +29,24 @@ const getOneContact = async (req, res) => {
 
 const deleteContact = async (req, res) => {
   const { id } = req.params;
-  const result = await Contact.findByIdAndDelete(id);
+  const { _id: owner } = req.user;
+  const result = await Contact.findByIdAndDelete({ _id: id, owner });
   if (!result) {
     throw HttpError(404, "Contact  not found");
   }
-  res.json(result);
+  res.json(result, { message: "Delete succsess" });
 };
 
 const createContact = async (req, res) => {
-  const result = await Contact.create(req.body);
+  const { _id: owner } = req.user;
+  const result = await Contact.create({ ...req.body, owner });
   res.status(201).json(result);
 };
 
 const updateContact = async (req, res) => {
   const { id } = req.params;
-  const result = await Contact.findByIdAndUpdate(id, req.body, { new: true });
+  const { _id: owner } = req.user;
+  const result = await Contact.findByIdAndUpdate({ _id: id, owner }, req.body);
   if (!result) {
     throw HttpError(404, "Contact  not found");
   }
@@ -46,7 +59,7 @@ const updateFavorite = async (req, res) => {
   if (!result) {
     throw HttpError(404, "Contact  not found");
   }
-  res.json(result);
+  res.status(200).json(result);
 };
 
 export default {

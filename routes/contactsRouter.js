@@ -1,26 +1,26 @@
 import express from "express";
 import ctrl from "../controllers/contactsControllers.js";
-
 import validateBody from "../helpers/validateBody.js";
-
+import isCheckBody from "../middleware/isCheckBody.js";
+import isValidId from "../middleware/isValidId.js";
+import authenticate from "../middleware/authenticate.js";
 import {
   createContactSchema,
   updateContactSchema,
   updateFavoriteSchema,
 } from "../modals/contact.js";
-import isCheckBody from "../middleware/isCheckBody.js";
-import isValidId from "../middleware/isValidId.js";
 
 const contactsRouter = express.Router();
 
-contactsRouter.get("/", ctrl.getAllContacts);
+contactsRouter.get("/", authenticate, ctrl.getAllContacts);
 
-contactsRouter.get("/:id", isValidId, ctrl.getOneContact);
+contactsRouter.get("/:id", authenticate, isValidId, ctrl.getOneContact);
 
-contactsRouter.delete("/:id", isValidId, ctrl.deleteContact);
+contactsRouter.delete("/:id", authenticate, isValidId, ctrl.deleteContact);
 
 contactsRouter.post(
   "/",
+  authenticate,
   isCheckBody,
   validateBody(createContactSchema),
   ctrl.createContact
@@ -28,6 +28,7 @@ contactsRouter.post(
 
 contactsRouter.put(
   "/:id",
+  authenticate,
   isValidId,
   isCheckBody,
   validateBody(updateContactSchema),
@@ -36,6 +37,7 @@ contactsRouter.put(
 
 contactsRouter.patch(
   "/:id/favorite",
+  authenticate,
   isValidId,
   isCheckBody,
   validateBody(updateFavoriteSchema),
