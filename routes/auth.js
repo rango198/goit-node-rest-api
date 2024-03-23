@@ -1,21 +1,40 @@
 import express from "express";
+
+import authControllers from "../controllers/authControllers.js";
+
 import validateBody from "../helpers/validateBody.js";
-import reg from "../controllers/authControllers/authregister.js";
-import log from "../controllers/authControllers/login.js";
-import isCheckBody from "../middleware/isCheckBody.js";
-import { authSchema } from "../modals/user.js";
+
 import authenticate from "../middleware/authenticate.js";
-import authCurrent from "../controllers/authControllers/getCurrent.js";
-import authLogout from "../controllers/authControllers/logout.js";
 
-const router = express.Router();
+import {
+  userSignupSchema,
+  userSigninSchema,
+  updateSubscriptionSchema,
+} from "../schema/userSchema.js";
 
-router.post("/register", isCheckBody, validateBody(authSchema), reg.register);
+const authRouter = express.Router();
 
-router.post("/login", isCheckBody, validateBody(authSchema), log.login);
+authRouter.post(
+  "/register",
+  validateBody(userSignupSchema),
+  authControllers.register
+);
 
-router.get("/current", authenticate, authCurrent.getCurrent);
+authRouter.post(
+  "/login",
+  validateBody(userSigninSchema),
+  authControllers.login
+);
 
-router.post("/logout", authenticate, authLogout.logout);
+authRouter.get("/current", authenticate, authControllers.getCurrent);
 
-export default router;
+authRouter.post("/logout", authenticate, authControllers.logout);
+
+authRouter.patch(
+  "/",
+  authenticate,
+  validateBody(updateSubscriptionSchema),
+  authControllers.updateSubscriptionUsers
+);
+
+export default authRouter;

@@ -1,30 +1,38 @@
-import HttpError from "../helpers/HttpError.js";
 import jwt from "jsonwebtoken";
+
+import { findUser } from "../services/authServices.js";
+import HttpError from "../helpers/HttpError.js";
+
 import dotenv from "dotenv";
-import { User } from "../modals/user.js";
 dotenv.config();
+
 const { SECRET_KEY } = process.env;
 
-const authenticate = async (req, res, next) => {
-  const { authorization } = req.headers;
+const authenticate = async (req, _, next) => {
+  const { authorization = "" } = req.headers;
   if (!authorization) {
-    throw HttpError(401, "Authorization header not found");
+    return next(HttpError(401, "Authorization header not found"));
   }
-
   const [bearer, token] = authorization.split(" ");
+
   if (bearer !== "Bearer") {
-    throw HttpError(401, "Not authorized");
+    return next(HttpError(401, "Bearer not found"));
   }
   try {
     const { id } = jwt.verify(token, SECRET_KEY);
-    const user = await User.findById(id);
+
+    const user = await findUser({ _id: id });
+
     if (!user) {
-      throw HttpError(401, "user not found");
+      return next(HttpError(401, "User not found"));
+    }
+    if (!user.token) {
+      return next(HttpError(401, "User already logout"));
     }
     req.user = user;
     next();
-  } catch (error) {
-    throw HttpError(401, error.message);
+  } catch {
+    next(HttpError(401, console.error.message));
   }
 };
 

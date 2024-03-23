@@ -1,8 +1,6 @@
 import { Schema, model } from "mongoose";
 import { handleMongooseError } from "../helpers/handleMongooseError.js";
-import Joi from "joi";
-
-// const emailRegex = /^[a-zA-Z0-9]+@[a-zA-Z0-9]+\.[a-zA-Z0-9]+$/;
+import { setUpdateSettings } from "./hooks.js";
 
 const userSchema = new Schema(
   {
@@ -14,7 +12,6 @@ const userSchema = new Schema(
     email: {
       type: String,
       required: [true, "Email is required"],
-      // match: emailRegex,
       unique: true,
     },
     subscription: {
@@ -32,10 +29,8 @@ const userSchema = new Schema(
 
 userSchema.post("save", handleMongooseError);
 
-export const authSchema = Joi.object({
-  email: Joi.string().required(),
-  password: Joi.string().min(6).required(),
-  subscription: Joi.string(),
-});
+userSchema.pre("findOneAndUpdate", setUpdateSettings);
+
+userSchema.post("findOneAndUpdate", handleMongooseError);
 
 export const User = model("user", userSchema);

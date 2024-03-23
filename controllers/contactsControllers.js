@@ -1,28 +1,32 @@
+import * as contactsService from "../services/contactsServices.js";
 import HttpError from "../helpers/HttpError.js";
-import ctrWrapper from "../helpers/ctrWrapper.js";
-import Contact from "../modals/contact.js";
+import ctrlWrapper from "../helpers/ctrlWrapper.js";
 
 const getAllContacts = async (req, res) => {
   const { _id: owner } = req.user;
-  const { page = 1, limit = 10 } = req.query;
+  const { page = 1, limit = 10, favorite } = req.query;
   const skip = (page - 1) * limit;
-  const filter = { owner, ...filterParams };
 
-  const result = await Contact.find({ owner }, "createdAt -updateAt", {
-    skip,
-    limit,
-  }).populate("owner", "name email");
-  const total = await Contact.countDocuments(filter);
-
-  res.status(200).json(result, total);
+  const result = await contactsService.listContacts(
+    // { owner, favorite },
+    favorite ? { $and: [{ owner }, { favorite }] } : { owner },
+    {
+      skip,
+      limit,
+    }
+  );
+  if (!result) {
+    throw HttpError(404);
+  }
+  res.status(200).json(result);
 };
 
 const getOneContact = async (req, res) => {
   const { id } = req.params;
   const { _id: owner } = req.user;
-  const result = await Contact.findOne({ _id: id, owner });
+  const result = await contactsService.getContact({ _id: id, owner });
   if (!result) {
-    throw HttpError(404, "Contact not found");
+    throw HttpError(404);
   }
   res.status(200).json(result);
 };
@@ -30,43 +34,51 @@ const getOneContact = async (req, res) => {
 const deleteContact = async (req, res) => {
   const { id } = req.params;
   const { _id: owner } = req.user;
-  const result = await Contact.findByIdAndDelete({ _id: id, owner });
+  const result = await contactsService.removeContact({ _id: id, owner });
   if (!result) {
-    throw HttpError(404, "Contact  not found");
+    throw HttpError(404);
   }
-  res.json(result, { message: "Delete succsess" });
+  res.json(result);
 };
 
 const createContact = async (req, res) => {
   const { _id: owner } = req.user;
-  const result = await Contact.create({ ...req.body, owner });
+  const result = await contactsService.addContact({ ...req.body, owner });
+
   res.status(201).json(result);
 };
 
 const updateContact = async (req, res) => {
   const { id } = req.params;
   const { _id: owner } = req.user;
-  const result = await Contact.findByIdAndUpdate({ _id: id, owner }, req.body);
+  const result = await contactsService.updateContact(
+    { _id: id, owner },
+    req.body
+  );
   if (!result) {
-    throw HttpError(404, "Contact  not found");
+    throw HttpError(404);
   }
   res.json(result);
 };
 
 const updateFavorite = async (req, res) => {
   const { id } = req.params;
-  const result = await Contact.findByIdAndUpdate(id, req.body, { new: true });
+  const { _id: owner } = req.user;
+  const result = await contactsService.updateFavorite(
+    { _id: id, owner },
+    req.body
+  );
   if (!result) {
-    throw HttpError(404, "Contact  not found");
+    throw HttpError(404, `contact ${id} Not found`);
   }
   res.status(200).json(result);
 };
 
 export default {
-  getAllContacts: ctrWrapper(getAllContacts),
-  getOneContact: ctrWrapper(getOneContact),
-  deleteContact: ctrWrapper(deleteContact),
-  createContact: ctrWrapper(createContact),
-  updateContact: ctrWrapper(updateContact),
-  updateFavorite: ctrWrapper(updateFavorite),
+  getAllContacts: ctrlWrapper(getAllContacts),
+  getOneContact: ctrlWrapper(getOneContact),
+  deleteContact: ctrlWrapper(deleteContact),
+  createContact: ctrlWrapper(createContact),
+  updateContact: ctrlWrapper(updateContact),
+  updateFavorite: ctrlWrapper(updateFavorite),
 };
