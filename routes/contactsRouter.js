@@ -1,5 +1,5 @@
 import express from "express";
-import ctrl from "../controllers/contactsControllers.js";
+import contactsControllers from "../controllers/contactsControllers.js";
 import validateBody from "../helpers/validateBody.js";
 import isCheckBody from "../middleware/isCheckBody.js";
 import isValidId from "../middleware/isValidId.js";
@@ -8,40 +8,39 @@ import {
   createContactSchema,
   updateContactSchema,
   updateFavoriteSchema,
-} from "../modals/contact.js";
+} from "../Schema/contactsSchema.js";
 
 const contactsRouter = express.Router();
 
-contactsRouter.get("/", authenticate, ctrl.getAllContacts);
+contactsRouter.use(authenticate);
 
-contactsRouter.get("/:id", authenticate, isValidId, ctrl.getOneContact);
+contactsRouter.get("/", contactsControllers.getAllContacts);
 
-contactsRouter.delete("/:id", authenticate, isValidId, ctrl.deleteContact);
+contactsRouter.get("/:id", isValidId, contactsControllers.getOneContact);
+
+contactsRouter.delete("/:id", isValidId, contactsControllers.deleteContact);
 
 contactsRouter.post(
   "/",
-  authenticate,
   isCheckBody,
   validateBody(createContactSchema),
-  ctrl.createContact
+  contactsControllers.createContact
 );
 
 contactsRouter.put(
   "/:id",
-  authenticate,
   isValidId,
   isCheckBody,
   validateBody(updateContactSchema),
-  ctrl.updateContact
+  contactsControllers.updateContact
 );
 
 contactsRouter.patch(
   "/:id/favorite",
-  authenticate,
   isValidId,
   isCheckBody,
   validateBody(updateFavoriteSchema),
-  ctrl.updateFavorite
+  contactsControllers.updateFavorite
 );
 
 export default contactsRouter;
