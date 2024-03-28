@@ -1,10 +1,41 @@
 import jwt from "jsonwebtoken";
 
+import gravatar from "gravatar";
+import fs from "fs/promises";
+import path from "path";
+import jimp from "jimp";
+
 import * as authServices from "../services/authServices.js";
 import HttpError from "../helpers/HttpError.js";
 import ctrlWrapper from "../helpers/ctrlWrapper.js";
+import Jimp from "jimp";
+import { User } from "../modals/User.js";
 
 const { SECRET_KEY } = process.env;
+
+const avatarsPath = path.resolve("public", "avatars");
+
+const changeAvatar = async (req, res) => {
+  const { _id } = req.user;
+  if (!req.file) {
+    throw HttpError(400, "Please add an image");
+  }
+  const { path: oldPath, filename } = req.file;
+  const newPath = path.join(avatarsPath, filename);
+  await fs.rename(oldPath, newPath);
+
+  Jimp.read(newPath)
+    .then((filename) => {
+      return filename.resize(250, 250).write(newPath);
+    })
+    .catch((error) => {
+      console.error(error);
+    });
+
+  const avatarsURL = path.join("avatars", filename);
+  await User.findByIdAndUpdate(_id, { avatarsURL });
+  res.json({ avatarsURL });
+};
 
 const register = async (req, res) => {
   const { email } = req.body;
@@ -81,6 +112,7 @@ const updateSubscriptionUsers = async (req, res) => {
 };
 
 export default {
+  changeAvatar: ctrlWrapper(changeAvatar),
   register: ctrlWrapper(register),
   login: ctrlWrapper(login),
   getCurrent: ctrlWrapper(getCurrent),
