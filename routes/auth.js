@@ -11,6 +11,7 @@ import {
   userSigninSchema,
   updateSubscriptionSchema,
 } from "../schema/userSchema.js";
+import upload from "../middleware/upload.js";
 
 const authRouter = express.Router();
 
@@ -35,6 +36,12 @@ authRouter.patch(
   authenticate,
   validateBody(updateSubscriptionSchema),
   authControllers.updateSubscriptionUsers
+);
+authRouter.patch(
+  "/avatars",
+  authenticate,
+  upload.single("avatar"),
+  authControllers.changeAvatar
 );
 
 export default authRouter;

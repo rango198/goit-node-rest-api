@@ -9,6 +9,7 @@ import {
   updateContactSchema,
   updateFavoriteSchema,
 } from "../Schema/contactsSchema.js";
+import upload from "../middleware/upload.js";
 
 const contactsRouter = express.Router();
 
