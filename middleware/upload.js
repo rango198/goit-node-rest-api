@@ -1,4 +1,4 @@
-import multer, { diskStorage } from "multer";
+import multer from "multer";
 import path from "path";
 import HttpError from "../helpers/HttpError.js";
 
@@ -14,7 +14,7 @@ const storage = multer.diskStorage({
 });
 
 const limits = {
-  fileSize: 5 * 1024 * 1024,
+  fileSize: 1024 * 1024 * 5,
 };
 
 const fileFilter = (req, file, cb) => {

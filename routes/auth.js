@@ -2,6 +2,8 @@ import express from "express";
 
 import authControllers from "../controllers/authControllers.js";
 
+import contactsControllers from "../controllers/contactsControllers.js";
+
 import validateBody from "../helpers/validateBody.js";
 
 import authenticate from "../middleware/authenticate.js";
@@ -41,7 +43,7 @@ authRouter.patch(
   "/avatars",
   authenticate,
   upload.single("avatar"),
-  authControllers.changeAvatar
+  contactsControllers.changeAvatar
 );
 
 export default authRouter;
