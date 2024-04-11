@@ -1,6 +1,13 @@
 import * as contactsService from "../services/contactsServices.js";
 import HttpError from "../helpers/HttpError.js";
 import ctrlWrapper from "../helpers/ctrlWrapper.js";
+import fs from "fs/promises";
+import path from "path";
+
+import Jimp from "jimp";
+import { User } from "../modals/User.js";
+
+const avatarsPath = path.resolve("public", "avatars");
 
 const getAllContacts = async (req, res) => {
   const { _id: owner } = req.user;
@@ -41,11 +48,40 @@ const deleteContact = async (req, res) => {
   res.json(result);
 };
 
-const createContact = async (req, res) => {
+export const createContact = async (req, res) => {
   const { _id: owner } = req.user;
-  const result = await contactsService.addContact({ ...req.body, owner });
+  const { name, email, phone } = req.body;
 
-  res.status(201).json(result);
+  const existingContact = await contactsService.getContactByDetails({
+    name,
+    email,
+    phone,
+    owner,
+  });
+
+  if (existingContact) {
+    return res.status(400).json({ message: "Contact already exists" });
+  }
+
+  let avatar;
+  if (req.file) {
+    const { path: oldPath, filename } = req.file;
+    const newPath = path.join(avatarsPath, filename);
+    await fs.rename(oldPath, newPath);
+    avatar = path.join("avatars", filename);
+  }
+
+  const newContactData = { ...req.body, owner };
+  if (avatar) {
+    newContactData.avatar = avatar;
+  }
+
+  const newContact = await contactsService.addContact(newContactData);
+  if (!newContact) {
+    throw HttpError(400);
+  }
+
+  res.status(201).json(newContact);
 };
 
 const updateContact = async (req, res) => {
@@ -73,8 +109,30 @@ const updateFavorite = async (req, res) => {
   }
   res.status(200).json(result);
 };
+const changeAvatar = async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ message: "No file uploaded" });
+  }
+
+  const { _id } = req.user;
+  const { path: tmpUpload, originalname } = req.file;
+  const img = await Jimp.read(tmpUpload);
+  await img
+    .autocrop()
+    .cover(250, 250, Jimp.HORIZONTAL_ALIGN_CENTER | Jimp.VERTICAL_ALIGN_MIDDLE)
+    .writeAsync(tmpUpload);
+
+  const filename = `${Date.now()}-${originalname}`;
+  const resultUpload = path.join(avatarsPath, filename);
+  await fs.rename(tmpUpload, resultUpload);
+  const avatarURL = path.join("avatars", filename);
+  await User.findByIdAndUpdate(_id, { avatarURL });
+
+  res.status(200).json({ avatarURL });
+};
 
 export default {
+  changeAvatar: ctrlWrapper(changeAvatar),
   getAllContacts: ctrlWrapper(getAllContacts),
   getOneContact: ctrlWrapper(getOneContact),
   deleteContact: ctrlWrapper(deleteContact),

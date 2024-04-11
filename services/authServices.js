@@ -1,6 +1,5 @@
 import bcrypt from "bcrypt";
 import gravatar from "gravatar";
-
 import { User } from "../modals/User.js";
 
 export const findUser = (filter) => User.findOne(filter);
