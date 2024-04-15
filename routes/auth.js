@@ -12,6 +12,7 @@ import {
   userSignupSchema,
   userSigninSchema,
   updateSubscriptionSchema,
+  userEmailSchema,
 } from "../schema/userSchema.js";
 import upload from "../middleware/upload.js";
 
@@ -21,6 +22,14 @@ authRouter.post(
   "/register",
   validateBody(userSignupSchema),
   authControllers.register
+);
+
+authRouter.get("/verify/:verificationCode", authControllers.verify);
+
+authRouter.post(
+  "/verify",
+  validateBody(userEmailSchema),
+  authControllers.resendVerify
 );
 
 authRouter.post(
