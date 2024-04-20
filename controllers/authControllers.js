@@ -6,8 +6,10 @@ import * as authServices from "../services/authServices.js";
 import HttpError from "../helpers/HttpError.js";
 import ctrlWrapper from "../helpers/ctrlWrapper.js";
 import sendEmail from "../helpers/sendEmail.js";
+import dotenv from "dotenv";
+dotenv.config();
 
-const { SECRET_KEY } = process.env;
+const { SECRET_KEY, PROJECT_URL } = process.env;
 
 const register = async (req, res) => {
   const { email } = req.body;
@@ -32,13 +34,14 @@ const register = async (req, res) => {
   if (!newUser) {
     throw HttpError(404, "Not found");
   }
-  const mail = {
+  const verifyEmail = {
     to: email,
     subject: "Verify email",
-    html: `<a href="${PROJECT_URL}/api/users/verify/${verificationCode}" target="_blank">Click to verify email</a>`,
+    html: `<a href="${PROJECT_URL}/api/users/verify/${verificationCode}"target="_blank">Click to verify email</a>`,
   };
 
-  await sendEmail(mail);
+  await sendEmail(verifyEmail);
+
   res.status(201).json({
     user: {
       email: newUser.email,
@@ -74,7 +77,7 @@ const resendVerify = async (req, res) => {
   const mail = {
     to: email,
     subject: "Verify email",
-    html: `<a href="${PROJECT_URL}/api/users/verify/${user.verificationCode}" target="_blank">Click to verify email</a>`,
+    html: `<a href="${PROJECT_URL}/api/users/verify/${user.verificationCode}"target="_blank">Click to verify email</a>`,
   };
 
   await sendEmail(mail);
